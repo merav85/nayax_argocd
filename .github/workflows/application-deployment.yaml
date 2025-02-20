@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-webapp
+  labels:
+    app: simple-webapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simple-webapp
+  template:
+    metadata:
+      labels:
+        app: simple-webapp
+    spec:
+      containers:
+      - name: simple-webapp
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: simple-webapp-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-webapp-config
+  labels:
+    app: simple-webapp
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Simple WebApp</title>
+    </head>
+    <body>
+        <h1>Hello, this is a customizable webpage!</h1>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-webapp-service
+  labels:
+    app: simple-webapp
+spec:
+  selector:
+    app: simple-webapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer

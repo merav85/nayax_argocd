@@ -1,0 +1,40 @@
+name: ArgoCD Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to ArgoCD
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ArgoCD Repository
+        uses: actions/checkout@v3
+        with:
+          repository: merav85/nayax_argocd
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd-linux-amd64
+          sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+
+      - name: Sync Application to Dev
+        run: argocd app sync simple-webapp -n dev
+
+      - name: Wait for Dev Deployment to Complete
+        run: argocd app wait simple-webapp -n dev --health --timeout 300
+
+      - name: Sync Application to Stage
+        run: argocd app sync simple-webapp -n stage
+
+      - name: Wait for Stage Deployment to Complete
+        run: argocd app wait simple-webapp -n stage --health --timeout 300
+
+      - name: Sync Application to Prod
+        run: argocd app sync simple-webapp -n prod
+
+      - name: Wait for Prod Deployment to Complete
+        run: argocd app wait simple-webapp -n prod --health --timeout 300
